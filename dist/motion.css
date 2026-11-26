@@ -1,0 +1,21 @@
+paraf-orb{display:block;pointer-events:none}
+paraf-orb canvas{display:block;width:100%;height:100%}
+.art paraf-orb{position:absolute;inset:0}
+.hero .motion-control{position:absolute;right:13px;bottom:11px;z-index:2;background:#152b20c9;color:#dcf7bf;border:1px solid #b8db8d57;border-radius:50%;height:32px;width:32px;display:grid;place-content:center;font:600 15px/1 system-ui;cursor:pointer;padding:0}
+.hero .motion-control[hidden]{display:none}
+.hero .halo{background:radial-gradient(ellipse,#b1e28732 0%,#aace6b09 52%,transparent 70%);animation:halo-drift 8s ease-in-out infinite alternate}
+.platform-link{isolation:isolate}
+.platform-link::after{width:94px;height:80px;right:-12px;top:-44px;border:1px solid currentColor;box-shadow:0 0 0 4px transparent,0 0 0 5px currentColor,0 0 0 11px transparent,0 0 0 12px currentColor,0 0 0 22px transparent,0 0 0 23px currentColor;opacity:.28;animation:platform-drift 7s ease-in-out infinite alternate}
+.platform-link:nth-child(2)::after{border-radius:26% 48% 35% 42%;animation-delay:-3s}
+.platform-link:nth-child(3)::after{border-radius:32% 62% 40% 58%;animation-delay:-5s}
+.platform-link:nth-child(4)::after{border-radius:50% 32% 55% 38%;animation-delay:-1.8s}
+.platform-link strong,.platform-link span{position:relative;z-index:1}
+@keyframes platform-drift{from{transform:translate(5px,-4px) rotate(-22deg)}to{transform:translate(-10px,9px) rotate(52deg)}}
+@keyframes halo-drift{from{transform:scale(.85) translateX(-4%)}to{transform:scale(1.1) translateX(3%)}}
+@keyframes meter-enter{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes trend-enter{from{stroke-dashoffset:125}to{stroke-dashoffset:0}}
+.resources .bar i{transform-origin:left;animation:meter-enter .75s ease-out both}
+.spark polyline{stroke-dasharray:125;animation:trend-enter 1s ease-out both}
+@media(max-width:720px){.hero:has(.resources) .motion-control{top:8px;right:8px;bottom:auto}.hero .art{right:-5%;width:46%}.hero:has(.hero-copy) .motion-control{bottom:10px;right:10px}}
+html.still .hero *,html.still .platform-link::after,html.still .spark polyline{animation:none!important}
+@media(prefers-reduced-motion:reduce){.hero *, .platform-link::after,.spark polyline{animation:none!important}.hero .motion-control{display:none}}

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101916">
+  <title>Paraf AI</title>
+  <link rel="icon" href="paraf.webp" type="image/webp">
+  <link rel="stylesheet" href="studio.css"><link rel="stylesheet" href="motion.css">
+</head>
+<body>
+<header><div class="bar">
+  <a class="brand" href="#studio"><img class="wordmark" src="wordmark.svg" alt="Paraf AI"></a>
+  <nav aria-label="Navigasi utama"><a href="#studio">Studio</a><a href="operasional/">Operasional</a><a href="#bounty">Peluang</a><a href="#tasks">Tugas saya</a></nav>
+  <span class="status" id="status">Memeriksa koneksi…</span>
+</div></header>
+<main id="studio">
+  <section class="hero">
+    <div class="hero-copy"><h1>Ruang kerja<br><em>bersama AI.</em></h1><p id="intro">Susun rencana, simpan tugas, dan mulai percakapan.</p><a class="dashboard-link" href="operasional/">Buka dashboard VPS</a></div>
+    <div class="art" aria-hidden="true"><div class="halo"></div><paraf-orb></paraf-orb></div><button type="button" class="motion-control" data-motion aria-label="Jeda animasi">Ⅱ</button>
+  </section>
+  <section id="platforms" class="platforms"><h2>Jelajahi platform</h2><div class="platform-grid"><a class="platform-link" href="https://superteam.fun/earn/bounties" target="_blank" rel="noopener noreferrer"><strong>Superteam Earn</strong><span>Bounty konten, desain &amp; kode</span></a><a class="platform-link" href="https://www.kaggle.com/competitions?group=active" target="_blank" rel="noopener noreferrer"><strong>Kaggle</strong><span>Kompetisi AI &amp; machine learning</span></a><a class="platform-link" href="https://hackenproof.com/programs" target="_blank" rel="noopener noreferrer"><strong>HackenProof</strong><span>Program bug bounty</span></a><a class="platform-link" href="https://dorahacks.io/hackathon" target="_blank" rel="noopener noreferrer"><strong>DoraHacks</strong><span>Hackathon untuk builder</span></a></div></section>
+  <section id="bounty" class="opportunities" aria-labelledby="bounty-title">
+    <div class="op-title"><h2 id="bounty-title">Bounty pilihan</h2><a href="#platforms">Jelajahi platform</a></div>
+    <p>Periksa hasil riset Hermes, lalu simpan ide yang siap dikerjakan ke Tugas saya.</p>
+    <div class="actions"><button type="button" id="research">Minta riset Hermes</button><button type="button" id="import-research">Impor hasil Hermes</button>
+    <label>Filter <select id="b-filter"><option value="all">Semua status</option><option>Terbuka</option><option>Perlu cek</option><option>Ditutup</option></select></label></div>
+    <p role="status" id="b-status"></p><div id="b-cards" class="op-grid"></div>
+  </section>
+  <dialog id="b-dialog" aria-labelledby="b-title"><div class="b-body"><h2 id="b-title"></h2><p id="b-info"></p><label for="b-text" id="b-label"></label><textarea id="b-text" rows="8"></textarea><div id="b-direct" hidden><label>Kata sandi Studio<input id="b-password" type="password" autocomplete="current-password"></label><button id="b-run">Jalankan di VPS</button></div><p id="b-error" role="status"></p><div class="actions"><button id="b-close">Tutup</button><button id="b-apply"></button></div></div></dialog>
+  <section id="peluang" class="opportunities"><div class="op-title"><h2>Referensi bounty &amp; grant</h2><small>Diperiksa 25 Nov 2026</small></div><div class="op-grid"><article class="op-card"><small>Bounty · Solana</small><h3>MultiHopper Build &amp; Route</h3><p>Bangun produk Solana dengan integrasi MultiHopper. Syarat hadiah mencakup volume transaksi nyata yang memenuhi kriteria minimal US$100.000.</p><p class="terms">Pool dasar 5.000 USDC · Pendaftaran via Superteam Earn</p><div><a href="https://superteam.fun/earn/listing/multihopper-build-and-route-challenge-up-to-dollar50000-revenue-share-1/" target="_blank" rel="noopener noreferrer">Detail resmi</a><button type="button" data-program="MultiHopper Build &amp; Route">Simpan tugas</button></div></article><article class="op-card"><small>Grant · Infrastruktur</small><h3>Solana Foundation Grants</h3><p>Ajukan proyek yang bermanfaat untuk komunitas Solana. Siapkan anggaran, target pengembangan, dan hasil yang dapat digunakan publik.</p><p class="terms">Proposal ditinjau secara bergulir</p><div><a href="https://solana.org/grants-funding" target="_blank" rel="noopener noreferrer">Detail resmi</a><button type="button" data-program="Solana Foundation Grants">Simpan tugas</button></div></article><article class="op-card"><small>Grant · Open source</small><h3>OpenSats General Grant</h3><p>Pendanaan bagi kontributor Bitcoin dan proyek open source terkait. Sertakan lisensi terbuka dan jelaskan manfaat proyek bagi komunitas.</p><p class="terms">Formulir pendaftaran tersedia · Global</p><div><a href="https://opensats.org/apply/grant" target="_blank" rel="noopener noreferrer">Detail resmi</a><button type="button" data-program="OpenSats General Grant">Simpan tugas</button></div></article></div></section>
+  <div class="layout"><section class="panel chat">
+    <h2>Percakapan</h2>
+    <div class="actions"><button id="suggest">✧ &nbsp; Rencanakan hackathon</button><button id="add">＋ &nbsp; Tambah tugas</button><button id="agenda">Susun agenda</button><button id="summary">Ringkas progres</button></div>
+    <section id="log" role="log" aria-label="Percakapan"></section>
+    <form id="form"><div id="auth" hidden><label for="pass">Kata sandi web</label><input id="pass" type="password" autocomplete="current-password"></div><textarea id="msg" required maxlength="6000" aria-label="Pesan untuk agen" placeholder="Apa yang ingin kamu kerjakan?"></textarea><div class="row"><small id="hint">Sesi ini</small><button id="send">Kirim</button></div></form><p id="error" role="alert"></p>
+  </section>
+  <aside class="panel" id="tasks"><h2>Tugas saya</h2><p class="progress" id="count" aria-live="polite"></p><progress id="meter" max="1" value="0" aria-label="Progres tugas"></progress><div class="task-tools"><label>Filter <select id="filter"><option value="all">Semua tugas</option><option value="open">Belum selesai</option><option value="done">Selesai</option></select></label><button id="export" type="button">Ekspor .txt</button></div><ul id="list"></ul><p id="empty">Tugas yang kamu tambahkan akan muncul di sini.</p></aside></div>
+<dialog id="editor" aria-labelledby="dialog-title"><form id="details">
+<h2 id="dialog-title"></h2>
+<label><span id="name-label"></span><input id="name" required maxlength="6000" autocomplete="off"></label>
+<label><span id="date-label"></span><input id="date" type="date"></label>
+<p id="plan-tip" hidden>Empat tahap, dari memilih masalah hingga mengirim demo, akan dijadwalkan mulai hari ini.</p>
+<div class="actions"><button type="button" id="cancel">Batal</button><button type="submit" id="apply">Simpan</button></div>
+</form></dialog></main>
+<script src="routes.js"></script><script src="orb.js"></script><script src="app.js"></script><script src="bounty.js"></script>
+</body></html>

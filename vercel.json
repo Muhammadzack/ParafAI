@@ -1,0 +1,1 @@
+{"framework":null,"outputDirectory":"dist","trailingSlash":true,"functions":{"api/riset-bounty.js":{"maxDuration":120,"includeFiles":"dist/bounty-prompt.json"}}}
