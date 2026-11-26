@@ -5,6 +5,45 @@
   const seed = {nama:'Nosana Content',url:'https://superteam.fun/earn/listing/create-nosana-content-explainer-threadarticle-or-creative-memevideo/',status:'ditutup',bukti:'Laporan Hermes: Submissions in Review, hitung mundur nol, dan tombol submit sudah hilang.',diperiksa:'2026-11-26T12:02:00+07:00',tenggat:'',konfirmasi:'Brief menyebut 25 November tanpa zona waktu.'};
   const fields = {hadiah_total:'Total hadiah',hadiah_pemenang:'Per pemenang',peserta:'Peserta',format:'Format karya',syarat:'Syarat',ide:'Ide konten',konfirmasi:'Perlu dikonfirmasi'};
   const iso = s => typeof s==='string' && /^\d{4}-\d{2}-\d{2}T\d\d:\d\d(?::\d\d(?:\.\d+)?)?(?:Z|[+-]\d\d:\d\d)$/.test(s) && Number.isFinite(Date.parse(s));
+  // Hermes can split one JSON array across chat messages. Only commit complete objects.
+  function readReport(text) {
+    if (text.length > 65000) throw Error('Hasil terlalu panjang.');
+    const raw = text.replace(/^[ \t]*`{3}(?:json)?[ \t]*$/gim, '')
+      .replace(/^[ \t]*\(\d+\s*\/\s*\d+\)[ \t]*/gm, '')
+      .replace(/[ \t]*\(\d+\s*\/\s*\d+\)[ \t]*(?=\r?$)/gm, '').trim();
+    const formatError = () => new Error('Periksa format JSON dari Hermes. Tempel laporan mulai dari tanda [.');
+    if (!raw.startsWith('[')) throw formatError();
+    try {
+      const items = JSON.parse(raw);
+      return {items, partial:false};
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+    }
+    const items = [];
+    let i = 1;
+    const skipSpace = () => { while (i < raw.length && /\s/.test(raw[i])) i++; };
+    while (true) {
+      skipSpace();
+      if (i === raw.length) return {items, partial:true};
+      if (raw[i] !== '{') throw formatError();
+      const start = i;
+      let depth = 0, quoted = false, escaped = false;
+      for (; i < raw.length; i++) {
+        const ch = raw[i];
+        if (quoted) {
+          if (escaped) escaped = false;
+          else if (ch === '\\') escaped = true;
+          else if (ch === '"') quoted = false;
+        } else if (ch === '"') quoted = true;
+        else if (ch === '{') depth++;
+        else if (ch === '}' && --depth === 0) break;
+      }
+      if (i === raw.length) return {items, partial:true};
+      try { items.push(JSON.parse(raw.slice(start, ++i))); } catch { throw formatError(); }
+      skipSpace();
+      if (i < raw.length && raw[i++] !== ',') throw formatError();
+    }
+  }
   function normalized(r) {
     if(!r || typeof r.nama!=='string'||!r.nama.trim()||r.nama.length>200) throw Error('Nama bounty harus diisi.');
     const url=new URL(r.url);
@@ -57,12 +96,23 @@
     if(!box.childElementCount)box.append(node('p','Belum ada bounty dengan status ini.'));
   }
   const dialog=get('b-dialog'),area=get('b-text');
+  const draftKey = 'paraf.bounty.import.draft';
+  let draft = '';
+  try { draft = sessionStorage.getItem(draftKey) || ''; } catch {}
+  function keepDraft(value) {
+    draft = value;
+    try {
+      if (value) sessionStorage.setItem(draftKey, value);
+      else sessionStorage.removeItem(draftKey);
+    } catch {}
+  }
+  area.addEventListener('input', () => { if (mode === 'import' && area.value.length <= 65000) keepDraft(area.value); });
   function setup(next) {
     mode=next;const research=mode==='research';
     get('b-title').textContent=research?'Minta riset Hermes':'Impor hasil Hermes';
-    get('b-info').textContent=research?'Salin instruksi ke chat Hermes di VPS. Setelah Hermes menjawab, tempel JSON melalui Impor hasil Hermes.':'Tempel array JSON dari Hermes. Laporan terbaru untuk URL yang sama akan memperbarui kartu. Data tersimpan di browser ini.';
+    get('b-info').textContent=research?'Salin instruksi ke chat Hermes di VPS. Setelah Hermes menjawab, tempel JSON melalui Impor hasil Hermes.':'Tempel jawaban Hermes. Jika pesan terbagi, simpan bagian pertama lalu tambahkan bagian berikutnya di akhir teks. Laporan terbaru untuk URL yang sama akan memperbarui kartu. Data tersimpan di browser ini.';
     get('b-label').textContent=research?'Instruksi untuk Hermes':'Hasil riset JSON';
-    area.value='';area.readOnly=research;get('b-error').textContent='';get('b-password').value='';get('b-direct').hidden=true;get('b-apply').textContent=research?'Salin instruksi':'Simpan hasil';
+    area.value=research?'':draft;area.readOnly=research;get('b-error').textContent='';get('b-password').value='';get('b-direct').hidden=true;get('b-apply').textContent=research?'Salin instruksi':'Simpan hasil';
     if(!dialog.open)dialog.showModal();
   }
   get('research').onclick=async()=>{
@@ -81,18 +131,32 @@
       try{await navigator.clipboard.writeText(area.value);get('b-error').textContent='Instruksi disalin. Tempel di chat Hermes.'}catch{area.focus();area.select();get('b-error').textContent='Pilih Salin pada teks yang disorot.'}return;
     }
     try{
-      const raw=area.value.trim().replace(/^\x60\x60\x60(?:json)?\s*/i,'').replace(/\s*\x60\x60\x60$/,'');
-      if(raw.length>65000)throw Error('Hasil terlalu panjang.');
-      const items=JSON.parse(raw);if(!Array.isArray(items)||items.length>30)throw Error('Gunakan array JSON dengan maksimal 30 bounty.');
-      if(!items.length){get('b-error').textContent='Hermes tidak menemukan kandidat untuk disimpan.';return}
+      const {items,partial}=readReport(area.value);
+      if(items.length>30)throw Error('Gunakan maksimal 30 bounty per impor.');
+      if(partial){
+        if(!area.value.endsWith('\n'))area.value+='\n';
+        keepDraft(area.value);
+      }
+      if(!items.length){
+        get('b-error').textContent=partial?'Belum ada kandidat lengkap. Tempel bagian berikutnya di akhir teks.':'Hermes tidak menemukan kandidat untuk disimpan.';
+        return;
+      }
       const next=new Map(db.map(x=>[x.url,x]));let count=0;
       for(const item of items.map(normalized)){
-        const prev=next.get(item.url);if(prev&&Date.parse(prev.diperiksa)>Date.parse(item.diperiksa))continue;
+        const prev=next.get(item.url);if(prev&&(Date.parse(prev.diperiksa)>Date.parse(item.diperiksa)||JSON.stringify(prev)===JSON.stringify(item)))continue;
         next.set(item.url,item);count++;
       }
       const sorted=[...next.values()].sort((a,b)=>Date.parse(b.diperiksa)-Date.parse(a.diperiksa));
-      localStorage.setItem(key,JSON.stringify(sorted));db=sorted;get('b-filter').value='all';draw();dialog.close();
-      get('b-status').textContent=count?count+' laporan disimpan.':'Laporan yang tersimpan lebih baru.';
+      localStorage.setItem(key,JSON.stringify(sorted));db=sorted;get('b-filter').value='all';draw();
+      const message=count?count+' laporan disimpan.':'Laporan yang sama atau lebih baru sudah tersimpan.';
+      get('b-status').textContent=message;
+      if(partial){
+        get('b-error').textContent=message+' Pesan masih terpotong. Tempel bagian berikutnya di akhir teks lalu tekan Simpan hasil lagi.';
+        area.focus();
+        area.setSelectionRange(area.value.length,area.value.length);
+      }else{
+        keepDraft('');dialog.close();
+      }
     }catch(e){get('b-error').textContent=e instanceof SyntaxError?'JSON belum valid. Salin seluruh array dari jawaban Hermes.':e.message}
   };
   get('b-run').onclick=async()=>{
