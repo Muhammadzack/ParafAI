@@ -8,9 +8,10 @@
   // Hermes can split one JSON array across chat messages. Only commit complete objects.
   function readReport(text) {
     if (text.length > 65000) throw Error('Hasil terlalu panjang.');
+    // Strip chat pagination only outside quoted JSON values, also when a phone joins lines.
     const raw = text.replace(/^[ \t]*`{3}(?:json)?[ \t]*$/gim, '')
-      .replace(/^[ \t]*\(\d+\s*\/\s*\d+\)[ \t]*/gm, '')
-      .replace(/[ \t]*\(\d+\s*\/\s*\d+\)[ \t]*(?=\r?$)/gm, '').trim();
+      .replace(/"(?:\\[\s\S]|[^"\\])*(?:"|$)|\(\d+\s*\/\s*\d+\)/g,
+        token => token[0] === '"' ? token : '').trim();
     const formatError = () => new Error('Periksa format JSON dari Hermes. Tempel laporan mulai dari tanda [.');
     if (!raw.startsWith('[')) throw formatError();
     try {
@@ -110,7 +111,7 @@
   function setup(next) {
     mode=next;const research=mode==='research';
     get('b-title').textContent=research?'Minta riset Hermes':'Impor hasil Hermes';
-    get('b-info').textContent=research?'Salin instruksi ke chat Hermes di VPS. Setelah Hermes menjawab, tempel JSON melalui Impor hasil Hermes.':'Tempel jawaban Hermes. Jika pesan terbagi, simpan bagian pertama lalu tambahkan bagian berikutnya di akhir teks. Laporan terbaru untuk URL yang sama akan memperbarui kartu. Data tersimpan di browser ini.';
+    get('b-info').textContent=research?'Salin instruksi ke chat Hermes di VPS. Setelah Hermes menjawab, tempel JSON melalui Impor hasil Hermes.':'Pilih file JSON atau tempel jawaban Hermes. Jika pesan terbagi, simpan bagian pertama lalu tambahkan bagian berikutnya di akhir teks. Laporan terbaru untuk URL yang sama akan memperbarui kartu. Data tersimpan di browser ini.';
     get('b-label').textContent=research?'Instruksi untuk Hermes':'Hasil riset JSON';
     area.value=research?'':draft;area.readOnly=research;get('b-error').textContent='';get('b-password').value='';get('b-direct').hidden=true;get('b-apply').textContent=research?'Salin instruksi':'Simpan hasil';
     if(!dialog.open)dialog.showModal();
@@ -126,7 +127,7 @@
   };
   get('import-research').onclick=()=>{setup('import');get('b-apply').disabled=false};
   get('b-close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{get('b-password').value=''});
-  get('b-apply').onclick=async()=>{
+  async function applyReport(){
     if(mode==='research'){
       try{await navigator.clipboard.writeText(area.value);get('b-error').textContent='Instruksi disalin. Tempel di chat Hermes.'}catch{area.focus();area.select();get('b-error').textContent='Pilih Salin pada teks yang disorot.'}return;
     }
@@ -158,6 +159,29 @@
         keepDraft('');dialog.close();
       }
     }catch(e){get('b-error').textContent=e instanceof SyntaxError?'JSON belum valid. Salin seluruh array dari jawaban Hermes.':e.message}
+  };
+  get('b-apply').onclick=applyReport;
+  const upload=document.createElement('input');
+  upload.type='file';
+  upload.accept='.json,application/json,text/plain';
+  upload.hidden=true;
+  const chooseFile=node('button','Impor file JSON');
+  chooseFile.type='button';
+  get('import-research').after(chooseFile,upload);
+  chooseFile.onclick=()=>upload.click();
+  upload.onchange=async()=>{
+    const file=upload.files[0];
+    if(!file)return;
+    upload.value='';
+    setup('import');
+    get('b-apply').disabled=false;
+    try {
+      if(file.size>260000)throw Error('File terlalu besar. Batas impor 65.000 karakter.');
+      area.value=await file.text();
+      await applyReport();
+    }catch(error){
+      get('b-error').textContent=error.message;
+    }
   };
   get('b-run').onclick=async()=>{
     const password=get('b-password').value;if(!password||pending)return;
